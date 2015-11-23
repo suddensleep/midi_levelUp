@@ -6,3 +6,4 @@ Work so far:
 
 - [Scraping MIDI files from the internet](./scraper.ipynb) 
 - [Explaining the formats of the resulting files](./flattening_tracks.ipynb)
+- [Extracting time series information in the rhythmic and melodic domains](./getting_melodies_and_rhythms.ipynb)
