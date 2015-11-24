@@ -1,0 +1,3 @@
+*.mid
+!./midi/pop/10000_Promises.mid
+!./midi/pop/1000_Oceans.mid
