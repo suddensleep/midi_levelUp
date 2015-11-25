@@ -8,3 +8,4 @@ Work so far:
 - [Explaining the formats of the resulting files](./flattening_tracks.ipynb)
 - [Extracting time series information in the rhythmic and melodic domains (first pass)](./getting_melodies_and_rhythms.ipynb)
 - [Extracting time series information in the rhythmic and melodic domains (final pass)](./getting_melodies_and_rhythms_optimized.ipynb)
+- [Getting markov models up and running](./markov_chains.ipynb)
