@@ -11,3 +11,4 @@ Diary of my work so far:
 - [Getting Markov Chains up and running](./markov_chains.ipynb)
 - [Recentered Markov Chains](./markov_chains_generalized.ipynb)
 - [Quantizing Rhythm Sequences](./quantizing_rhythms.ipynb)
+- [Making Markov Chains from Rhythmic Sequences](./markov_chains_for_rhythm.ipynb)
