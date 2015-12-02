@@ -1,5 +1,8 @@
 *.mid
-!./midi/pop/10000_Promises.mid
-!./midi/pop/1000_Oceans.mid
+!./midi/10000_Promises.mid
+!./midi/1000_Oceans.mid
+!./midi/100_pure_love.mid
+!./midi/13X_Forever.mid
+!./midi/1492_Conquest_Of_Paradise.mid
 *~
 *.pyc
