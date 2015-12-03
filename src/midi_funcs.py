@@ -8,6 +8,7 @@
 import sys
 import os
 import midi
+import random
 import midi_sequences as ms
 
 # global list of which instruments actually play melodies
@@ -246,11 +247,22 @@ def extract_all_sequences(filenames):
 def main(*args):
     try:
         path = args[1]
+        midi_list = get_midi_list(path)
     except IndexError:
-        print "Syntax: $ python midi_funcs.py <directory>"
-        return
-    midi_list = get_midi_list(path)
-    print extract_all_sequences(midi_list)
+        midi_list = get_midi_list()
+    sequences = extract_all_sequences(midi_list)
+    
+    rand_seq0 = random.randint(0, len(sequences[0]) - 1)
+    while len(sequences[0][rand_seq0]) == 0:
+        rand_seq0 = random.randint(0, len(sequences[0]) - 1)
+    rand_seq1 = random.randint(0, len(sequences[1]) - 1)
+
+    print "\nHere is an example of a melody sequence: "
+    print sequences[0][rand_seq0]
+    print "\nHere is an example of a rhythm sequence: "
+    print sequences[1][1]
+    print
+
     return
 
 

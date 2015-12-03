@@ -6,11 +6,13 @@
 ### MIDI files inside of it. Enjoy!             ###
 ###################################################
 
+import os
 import sys
 import midi_funcs as midf
 import markov_sequences as marks
 import itertools
 import pickle
+import random
 from math import modf
 from bisect import bisect
 
@@ -266,17 +268,105 @@ def make_all_chains(midi_path = '../midi/'):
     melodies, rhythms = midf.extract_all_sequences(midi_list)
     
     make_melody_chains(melodies)
+    print "\nMelody Markov chains serialized to midi_levelUp/pickles."
     
     rhythms = quantize(rhythms)
     make_rhythm_chains(rhythms)
+    print "\nRhythm Markov chains serialized to midi_levelUp/pickles."
+    print
+
+def print_example():
+    """
+    A demo method that will unpickle one melodic Markov chain
+    and one rhythmic Markov chain and display a random dictionary
+    entry from each.
+
+    Inputs: None
+
+    Outputs: None (printing)
+    """
+
+    pickle_dir = '../pickles/'
+    pickles = map(lambda x: pickle_dir + x, os.listdir(pickle_dir))
+    mel_picks = filter(lambda x: x[x.find('_') + 1] == 'm', pickles)
+    rhy_picks = filter(lambda x: x[x.find('_') + 1] == 'r', pickles)
+
+    mel_pick = mel_picks[random.randint(0, len(mel_picks) - 1)]
+    rhy_pick = rhy_picks[random.randint(0, len(rhy_picks) - 1)]
+    
+    with open(mel_pick, 'r') as f:
+        mel_mark = pickle.load(f)
+    with open(rhy_pick, 'r') as g:
+        rhy_mark = pickle.load(g)
+
+    mel_i = random.randint(0, len(mel_mark.state_dict) - 1)
+    rhy_i = random.randint(0, len(rhy_mark.state_dict) - 1)
+
+    mel_key = mel_mark.state_dict.keys()[mel_i]
+    rhy_key = rhy_mark.state_dict.keys()[rhy_i]
+
+    mel_mode = mel_mark.mode
+    rhy_mode = rhy_mark.mode
+
+    if mel_mode == 0: 
+        print "\nGiven the pitch sequence:",
+        for i in range(len(mel_key)):
+            print str(mel_key[i]) + ',',
+        print "__, the probability distribution on __ is:"
+        print mel_mark.state_dict[mel_key]
+        print
+    elif mel_mode == 1:
+        print "\nGiven the pitch sequence: __,",
+        for i in range(len(mel_key)):
+            print str(mel_key[i]) + ',',
+        print "the probability distribution on __ is:"
+        print mel_mark.state_dict[mel_key]
+        print
+    else:
+        print "\nGiven the pitch sequence:",
+        for i in range(len(mel_key[0])):
+            print str(mel_key[0][i]) + ',',
+        print "__,",
+        for i in range(len(mel_key[1])):
+            print str(mel_key[1][i]) + ', ',
+        print "the probability distribution on __ is:"
+        print mel_mark.state_dict[mel_key]
+        print
+
+    if rhy_mode == 0: 
+        print "\nGiven the rhythm sequence:",
+        for i in range(len(rhy_key)):
+            print str(rhy_key[i]) + ',',
+        print "__, the probability distribution on __ is:"
+        print rhy_mark.state_dict[rhy_key]
+        print
+    elif rhy_mode == 1:
+        print "\nGiven the rhythm sequence: __,",
+        for i in range(len(rhy_key)):
+            print str(rhy_key[i]) + ',',
+        print "the probability distribution on __ is:"
+        print rhy_mark.state_dict[rhy_key]
+        print
+    else:
+        print "\nGiven the rhythm sequence:",
+        for i in range(len(rhy_key[0])):
+            print str(rhy_key[0][i]) + ',',
+        print "__,",
+        for i in range(len(rhy_key[1])):
+            print str(rhy_key[1][i]) + ',',
+        print "the probability distribution on __ is:"
+        print rhy_mark.state_dict[rhy_key]
+        print
 
 
 def main(*args):
     try:
         path = args[1]
         make_all_chains(path)
+        print_example()
     except IndexError:
         make_all_chains()
+        print_example()
 
 if __name__ == '__main__':
     main(*sys.argv)
