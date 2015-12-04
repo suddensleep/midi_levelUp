@@ -1,0 +1,250 @@
+    <!DOCTYPE html>
+    <meta charset='utf-8'>
+    <style>
+    
+body { 
+    font: 12px Arial;
+}
+
+    .octave {
+	stroke: black;
+    }
+
+    .inner {
+	fill: grey;
+	opacity: 0.3
+    }
+
+    .outerb {
+	fill: black;
+    }
+
+    .outerw {
+	fill: white;
+	stroke: black;
+    }
+
+    .axis path,
+    .axis line {
+	fill: none;
+	stroke: black;
+	stroke-width: 1.3;
+	shape-rendering: crispEdges;
+    }
+
+    .axis text { display: none;}
+
+    .minor {
+	stroke: grey;
+	stroke-width: 0.25px;
+    }
+
+    .grid .tick {
+	stroke: lightgrey;
+	stroke-opacity: 0.3;
+	shape-rendering: crispEdges;
+    }
+
+    .grid path {
+	stroke-width: 0.5;
+    }
+
+    .area {
+	fill: steelblue;
+	opacity: 0.1;
+    }
+
+</style>
+
+<body>
+  <script src='http://d3js.org/d3.v3.min.js'></script>
+
+  <script>
+
+var margin = {top: 30, right: 20, bottom: 30, left: 100},
+width = 1200 - margin.left - margin.right,
+height = 600 - margin.top - margin.bottom;
+
+var svg = d3.select('body')
+    .append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom)
+    .append('g')
+    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+var x = d3.scale.linear().range([0, width]);
+var y = d3.scale.linear().range([0, height]);
+
+var xAxis = d3.svg.axis().scale(x)
+    .orient("top")
+    .tickValues([0, 4, 8, 12, 16]);
+
+var yAxis = d3.svg.axis().scale(y)
+    .orient('right').ticks(25);
+
+var bars = [2, 4, 6, 9, 11, 14, 16, 18, 21, 23];
+var whitebars = [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 20, 22, 24];
+
+var area = d3.svg.area()
+    .y1(function(d) { return d; });
+
+function make_x_axis() {
+    return d3.svg.axis()
+	.scale(x)
+	.orient('bottom')
+	.tickValues([0, 4, 8, 12, 16])
+}
+
+function make_x_minor_ticks() {
+    return d3.svg.axis()
+	.scale(x)
+	.orient('bottom')
+	.ticks(16)
+}
+
+function make_y_axis() {
+    return d3.svg.axis()
+	.scale(y)
+	.orient('left')
+	.ticks(25)
+}
+
+x.domain([0, 16]);
+y.domain([0, 25]);
+
+
+svg.append('g')
+    .attr('class', 'x axis')
+    .attr('transform', 'translate(0,' + height + ')')
+    .call(xAxis);
+
+
+svg.append('g')
+    .attr('class', 'y axis')
+    .call(yAxis);
+
+
+svg.append('g')
+    .attr('class', 'axis')
+    .attr('transform', 'translate(0,' + height + ')')
+    .call(make_x_axis()
+	  .tickSize(-height, 0, 0)
+	  .tickFormat('')
+	 );
+
+svg.append('g')
+    .attr('class', 'minor')
+    .attr('transform', 'translate(0,' + height + ')')
+    .call(make_x_minor_ticks()
+	  .tickSize(-height, 0, 0)
+	  .tickFormat('')
+	 );
+
+svg.append('g')
+    .attr('class', 'axis')
+    .call(make_y_axis()
+	  .tickSize(-width, 0, 0)
+	  .tickFormat('')
+	 );
+
+svg.selectAll('.inner')
+    .data(bars)
+    .enter()
+    .append('rect')
+    .attr('class', 'inner')
+    .attr('x', 0)
+    .attr('y', function(d) { return y(d); })
+    .attr('width', width)
+    .attr('height', y(1));
+
+svg.selectAll('.outerb')
+    .data(bars)
+    .enter()
+    .append('rect')
+    .attr('class', 'outerb')
+    .attr('x', -100)
+    .attr('y', function(d) { return y(d); })
+    .attr('width', 100)
+    .attr('height', y(1));
+
+svg.selectAll('.outerw')
+    .data(whitebars)
+    .enter()
+    .append('rect')
+    .attr('class', 'outerw')
+    .attr('x', -100)
+    .attr('y', function(d) { return y(d); })
+    .attr('width', 100)
+    .attr('height', y(1));
+
+svg.append('line')
+    .attr('class', 'octave')
+    .attr('x1', -100)
+    .attr('y1', y(13))
+    .attr('x2', width)
+    .attr('y2', y(13))
+    .style('stroke-width', 2);
+
+/*
+d3.csv('data/data.csv', function(error, data) {
+    data.forEach(function(d) {
+	d.date = parseDate(d.date);
+	d.close = +d.close;
+    });
+
+    x.domain(d3.extent(data, function(d) { return d.date; }));
+    y.domain([0, d3.max(data, function(d) { return d.close; })]);
+
+    svg.append('path')
+	.attr('class', 'line')
+	.attr('d', valueline(data));
+
+    svg.append('g')
+	.attr('class', 'x axis')
+	.attr('transform', 'translate(0,' + height + ')')
+	.call(xAxis);
+
+    svg.append('g')
+	.attr('class', 'y axis')
+	.call(yAxis);
+
+    svg.append('text')
+	.attr('transform', 'translate(' + (width / 2) + ' ,' +
+	      (height + margin.bottom) + ')')
+	.style('text-anchor', 'middle')
+	.text('Date');
+
+    svg.append('text')
+	.attr('transform', 'rotate(-90)')
+	.attr('y', 0 - margin.left)
+	.attr('x', 0 - (height / 2))
+	.attr('dy', '1em')
+	.style('text-anchor', 'middle')
+	.text('Value');
+
+    svg.append('text')
+	.attr('x', (width / 2))
+	.attr('y', 0 - (margin.top / 2))
+	.attr('text-anchor', 'middle')
+	.style('font-size', '16px')
+	.style('text-decoration', 'underline')
+	.text('Value vs Date Graph');
+
+    svg.append('g')
+	.attr('class', 'grid')
+	.attr('transform', 'translate(0,' + height + ')')
+	.call(make_x_axis()
+	      .tickSize(-height, 0, 0)
+	      .tickFormat('')
+	     );
+
+    svg.append('g')
+	.attr('class', 'grid')
+	.call(make_y_axis()
+	      .tickSize(-width, 0, 0)
+	      .tickFormat('')
+	     );
+});
+*/
+</script>
+    </body>
