@@ -6,13 +6,22 @@ body {
     font: 12px Arial;
 }
 
+    .svg {
+	border: 1px solid black;
+	border-radius: 10px;
+    }
+
     .octave {
 	stroke: black;
     }
 
-    .inner {
+    .innerg {
 	fill: grey;
 	opacity: 0.3
+    }
+
+    .innerw {
+	fill: white;
     }
 
     .outerb {
@@ -49,14 +58,14 @@ body {
 	stroke-width: 0.5;
     }
 
-    .area {
+    .note {
 	fill: steelblue;
-	opacity: 0.1;
     }
 
 </style>
 
 <body>
+<h1>Instructions: add notes from the reservoir into the stream.</h1>
   <script src='http://d3js.org/d3.v3.min.js'></script>
 
   <script>
@@ -67,13 +76,18 @@ height = 600 - margin.top - margin.bottom;
 
 var svg = d3.select('body')
     .append('svg')
+    .attr('class', 'svg')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom)
     .append('g')
-    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+    .on('click', click);
 
 var x = d3.scale.linear().range([0, width]);
 var y = d3.scale.linear().range([0, height]);
+
+var invx = d3.scale.linear().range([0, 16]);
+var invy = d3.scale.linear().range([0, 25]);
 
 var xAxis = d3.svg.axis().scale(x)
     .orient("top")
@@ -112,6 +126,48 @@ function make_y_axis() {
 x.domain([0, 16]);
 y.domain([0, 25]);
 
+invx.domain([0, width]);
+invy.domain([0, height]);
+
+svg.selectAll('.innerg')
+    .data(bars)
+    .enter()
+    .append('rect')
+    .attr('class', 'innerg')
+    .attr('x', 0)
+    .attr('y', function(d) { return y(d); })
+    .attr('width', width)
+    .attr('height', y(1));
+
+svg.selectAll('.outerb')
+    .data(bars)
+    .enter()
+    .append('rect')
+    .attr('class', 'outerb')
+    .attr('x', -100)
+    .attr('y', function(d) { return y(d); })
+    .attr('width', 100)
+    .attr('height', y(1));
+
+svg.selectAll('.outerw')
+    .data(whitebars)
+    .enter()
+    .append('rect')
+    .attr('class', 'outerw')
+    .attr('x', -100)
+    .attr('y', function(d) { return y(d); })
+    .attr('width', 100)
+    .attr('height', y(1));
+
+svg.selectAll('.innerw')
+    .data(whitebars)
+    .enter()
+    .append('rect')
+    .attr('class', 'innerw')
+    .attr('x', 0)
+    .attr('y', function(d) { return y(d); })
+    .attr('width', width)
+    .attr('height', y(1));
 
 svg.append('g')
     .attr('class', 'x axis')
@@ -147,36 +203,6 @@ svg.append('g')
 	  .tickFormat('')
 	 );
 
-svg.selectAll('.inner')
-    .data(bars)
-    .enter()
-    .append('rect')
-    .attr('class', 'inner')
-    .attr('x', 0)
-    .attr('y', function(d) { return y(d); })
-    .attr('width', width)
-    .attr('height', y(1));
-
-svg.selectAll('.outerb')
-    .data(bars)
-    .enter()
-    .append('rect')
-    .attr('class', 'outerb')
-    .attr('x', -100)
-    .attr('y', function(d) { return y(d); })
-    .attr('width', 100)
-    .attr('height', y(1));
-
-svg.selectAll('.outerw')
-    .data(whitebars)
-    .enter()
-    .append('rect')
-    .attr('class', 'outerw')
-    .attr('x', -100)
-    .attr('y', function(d) { return y(d); })
-    .attr('width', 100)
-    .attr('height', y(1));
-
 svg.append('line')
     .attr('class', 'octave')
     .attr('x1', -100)
@@ -185,66 +211,52 @@ svg.append('line')
     .attr('y2', y(13))
     .style('stroke-width', 2);
 
-/*
-d3.csv('data/data.csv', function(error, data) {
-    data.forEach(function(d) {
-	d.date = parseDate(d.date);
-	d.close = +d.close;
-    });
+function click(){
+    // Ignore the click event if it was suppressed
+    if (d3.event.defaultPrevented) return;
+    
+    // Extract the click location\
+    var point = d3.mouse(this)
+    , p = {x: point[0], y: point[1] };
 
-    x.domain(d3.extent(data, function(d) { return d.date; }));
-    y.domain([0, d3.max(data, function(d) { return d.close; })]);
+    var dx = x(Math.floor(invx(p.x)));
+    var dy = y(Math.floor(invy(p.y)));
+    
+    // Append a new point
+    svg.append("rect")
+        .attr("transform", "translate(" + (dx) + "," + (dy) + ")")
+        .attr("height", y(1))
+	.attr("width", x(1))
+        .attr("class", "note")
+        .style("cursor", "pointer")
+        .call(drag);
+}
 
-    svg.append('path')
-	.attr('class', 'line')
-	.attr('d', valueline(data));
+var drag = d3.behavior.drag()
+    .on('drag', dragmove)
+    .on('dragend', dragclick);
 
-    svg.append('g')
-	.attr('class', 'x axis')
-	.attr('transform', 'translate(0,' + height + ')')
-	.call(xAxis);
+function dragmove(d) {
+    var rx = d3.event.x - x(.5);
+    var ry = d3.event.y - y(.5);
+    d3.select(this)
+	.attr('transform', 'translate(' + rx + ',' + ry + ')');
+}
 
-    svg.append('g')
-	.attr('class', 'y axis')
-	.call(yAxis);
+function dragclick(d) {
 
-    svg.append('text')
-	.attr('transform', 'translate(' + (width / 2) + ' ,' +
-	      (height + margin.bottom) + ')')
-	.style('text-anchor', 'middle')
-	.text('Date');
+    var loc = this.transform.animVal[0].matrix;
 
-    svg.append('text')
-	.attr('transform', 'rotate(-90)')
-	.attr('y', 0 - margin.left)
-	.attr('x', 0 - (height / 2))
-	.attr('dy', '1em')
-	.style('text-anchor', 'middle')
-	.text('Value');
+    console.log(loc.e, loc.f);
+    
+    var rx = x(Math.floor(invx(loc.e + x(.5))));
+    var ry = y(Math.floor(invy(loc.f + y(.5))));
 
-    svg.append('text')
-	.attr('x', (width / 2))
-	.attr('y', 0 - (margin.top / 2))
-	.attr('text-anchor', 'middle')
-	.style('font-size', '16px')
-	.style('text-decoration', 'underline')
-	.text('Value vs Date Graph');
+    console.log(rx, ry);
+    
+    d3.select(this)
+	.attr('transform', 'translate(' + rx + ',' + ry + ')');
+}
 
-    svg.append('g')
-	.attr('class', 'grid')
-	.attr('transform', 'translate(0,' + height + ')')
-	.call(make_x_axis()
-	      .tickSize(-height, 0, 0)
-	      .tickFormat('')
-	     );
-
-    svg.append('g')
-	.attr('class', 'grid')
-	.call(make_y_axis()
-	      .tickSize(-width, 0, 0)
-	      .tickFormat('')
-	     );
-});
-*/
 </script>
     </body>
