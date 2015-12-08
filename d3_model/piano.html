@@ -63,12 +63,18 @@ body {
     }
 
 </style>
+    
+    <head>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    </head>
 
-<body>
-<h1>Instructions: add notes from the reservoir into the stream.</h1>
-  <script src='http://d3js.org/d3.v3.min.js'></script>
-
-  <script>
+    <body>
+    <h1>Instructions: add notes from the reservoir into the stream.</h1>
+    <input type='button' id='b' value='Play' class="btn"></input>
+    <input type='button' id='aug' value='Augment' class='btn'></input>
+    <br>
+    <script>
 
 var margin = {top: 30, right: 20, bottom: 30, left: 100},
 width = 1200 - margin.left - margin.right,
@@ -98,9 +104,6 @@ var yAxis = d3.svg.axis().scale(y)
 
 var bars = [2, 4, 6, 9, 11, 14, 16, 18, 21, 23];
 var whitebars = [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 20, 22, 24];
-
-var area = d3.svg.area()
-    .y1(function(d) { return d; });
 
 function make_x_axis() {
     return d3.svg.axis()
@@ -221,15 +224,36 @@ function click(){
 
     var dx = x(Math.floor(invx(p.x)));
     var dy = y(Math.floor(invy(p.y)));
+
+    var flag = false;
+
+    var curr_notes = svg.selectAll('[active=true]');
     
-    // Append a new point
-    svg.append("rect")
-        .attr("transform", "translate(" + (dx) + "," + (dy) + ")")
-        .attr("height", y(1))
-	.attr("width", x(1))
-        .attr("class", "note")
-        .style("cursor", "pointer")
-        .call(drag);
+    for (i = 0; i < curr_notes[0].length; i++) {
+	var loc = curr_notes[0][i];
+	if (Math.abs(dx - loc.x) < .1 && Math.abs(dy - loc.y) < .1) {
+	    flag = true;
+	    var curr_rect = curr_notes[0][i];
+	}
+    }
+
+    if (flag) {
+	d3.select(curr_rect).call(change_opacity);
+    }
+    else {
+	// Append a new point
+	svg.append("rect")
+	    .attr("x", dx)
+	    .attr("y", dy)
+	    .attr("height", y(1))
+	    .attr("width", x(1))
+	    .attr("class", "note")
+	    .attr('active', true)
+	    .style("cursor", "pointer")
+	    .call(drag);
+    }
+
+    
 }
 
 var drag = d3.behavior.drag()
@@ -240,23 +264,97 @@ function dragmove(d) {
     var rx = d3.event.x - x(.5);
     var ry = d3.event.y - y(.5);
     d3.select(this)
-	.attr('transform', 'translate(' + rx + ',' + ry + ')');
+	.attr('transform', 'translate(' + rx + ',' + ry + ')');    
+}
+
+function change_opacity() {
+    var active = this.active ? false : true,
+	newOpacity = active ? 0 : 1;
+
+    d3.select(this[0][0]).style('opacity', newOpacity);
+
+    d3.select(this[0][0]).attr('active', !active);
 }
 
 function dragclick(d) {
 
-    var loc = this.transform.animVal[0].matrix;
+    var rx = x(Math.floor(invx(this.x + x(.5))));
+    var ry = y(Math.floor(invy(this.y + y(.5))));
 
-    console.log(loc.e, loc.f);
-    
-    var rx = x(Math.floor(invx(loc.e + x(.5))));
-    var ry = y(Math.floor(invy(loc.f + y(.5))));
-
-    console.log(rx, ry);
-    
     d3.select(this)
 	.attr('transform', 'translate(' + rx + ',' + ry + ')');
 }
+
+d3.select('#b').on('click', compile_send_notes);
+d3.select('#aug').on('click', augment_notes);
+
+function augment_notes() {
+    var notes = d3.selectAll('[active=true]');
+    var data = [];
+    for (i = 0; i < notes[0].length; i++) {
+	loc = notes[0][i];
+	data.push([invx(loc.x.animVal.value), invy(loc.y.animVal.value)]);
+    }
+
+    $.ajax({
+	type: "POST",
+	contentType: "application/json; charset=utf-8",
+	url: "/augment",
+	dataType: "json",
+	async: true,
+	data: "{\"notes\": \""+data+"\"}",
+	success: function(data) {
+	    d3.selectAll('.note').remove();
+	    data = data.notes.split(',');
+	    note_data = [];
+	    for (i = 0; i < (data.length / 2); i++) {
+		note_data.push({ 'x': parseFloat(data[2 * i]),
+				 'y': parseFloat(data[2 * i + 1])});
+	    }
+	    
+	    svg.selectAll('.note')
+		.data(note_data)
+		.enter()
+		.append('rect')
+		.attr('class', 'note')
+		.attr('x', function(d) { return x(d.x); })
+		.attr('y', function(d) { return y(d.y); })
+		.attr('height', y(1))
+		.attr('width', x(1))
+		.attr('active', true)
+		.style('cursor', 'pointer')
+		.call(drag);
+	},
+	error: function(result) {
+	    console.log('oops');
+	}
+    });
+}
+
+function compile_send_notes() {
+    var notes = d3.selectAll('[active=true]');
+    var data = [];
+    for (i = 0; i < notes[0].length; i++) {
+	loc = notes[0][i];
+	data.push([invx(loc.x.animVal.value), invy(loc.y.animVal.value)]);
+    }
+
+    $.ajax({
+	type: "POST",
+	contentType: "application/json; charset=utf-8",
+	url: "/play",
+	dataType: "json",
+	async: true,
+	data: "{\"notes\": \""+data+"\"}",
+	success: function(data) {
+	    console.log('success!')
+	},
+	error: function(result) {
+	    console.log('oops');
+	}
+    });
+}    
+
 
 </script>
     </body>
