@@ -228,17 +228,20 @@ function click(){
     var flag = false;
 
     var curr_notes = svg.selectAll('[active=true]');
-    
+
     for (i = 0; i < curr_notes[0].length; i++) {
 	var loc = curr_notes[0][i];
-	if (Math.abs(dx - loc.x) < .1 && Math.abs(dy - loc.y) < .1) {
+	if (Math.abs(dx - loc.x.animVal.value) < .1 &&
+	    Math.abs(dy - loc.y.animVal.value) < .1) {
 	    flag = true;
 	    var curr_rect = curr_notes[0][i];
 	}
     }
 
     if (flag) {
-	d3.select(curr_rect).call(change_opacity);
+	// Note already exists, make inactive and transparent
+	d3.select(curr_rect)
+	    .call(change_opacity);
     }
     else {
 	// Append a new point
@@ -264,7 +267,8 @@ function dragmove(d) {
     var rx = d3.event.x - x(.5);
     var ry = d3.event.y - y(.5);
     d3.select(this)
-	.attr('transform', 'translate(' + rx + ',' + ry + ')');    
+	.attr('x', rx)
+	.attr('y', ry);
 }
 
 function change_opacity() {
@@ -278,11 +282,12 @@ function change_opacity() {
 
 function dragclick(d) {
 
-    var rx = x(Math.floor(invx(this.x + x(.5))));
-    var ry = y(Math.floor(invy(this.y + y(.5))));
+    var rx = x(Math.floor(invx(this.x.animVal.value + x(.5))));
+    var ry = y(Math.floor(invy(this.y.animVal.value + y(.5))));
 
     d3.select(this)
-	.attr('transform', 'translate(' + rx + ',' + ry + ')');
+	.attr('x', rx)
+	.attr('y', ry);
 }
 
 d3.select('#b').on('click', compile_send_notes);
