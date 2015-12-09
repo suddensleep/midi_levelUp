@@ -1,4 +1,9 @@
 import os
+import sys
 
-for f in os.listdir('/home/john_gilling/eb_flask_app/static/'):
-    os.remove('/home/john_gilling/eb_flask_app/static/' + f)
+absolute_path = os.path.dirname(os.path.realpath(sys.argv[0])) + '/static/'
+
+with open(absolute_path + 'log.txt', 'w') as g:
+    for f in os.listdir(absolute_path):
+        g.write(f + '\n')
+        os.remove(absolute_path + f)

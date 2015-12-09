@@ -4,13 +4,16 @@ import time
 import numpy
 import wave
 import os
+import sys
 import uuid
 from collections import defaultdict
 
 
 app = flask.Flask(__name__)
 
-absolute_path = '/home/john_gilling/eb_flask_app/'
+absolute_path = os.path.dirname(os.path.realpath(sys.argv[0])) + '/'
+
+print absolute_path
 
 def make_dict(notes):
     note_dict = defaultdict(list)
