@@ -46,6 +46,6 @@ $ sudo crontab -e
 Once inside the editor, append the line 
 	
 ```emacs
-*/5 * * * * python /path/to/repo/d3_model/clear_notes.py
+*/5 * * * * python /path/to/repo/d3_model/clear_static.py
 ```
 and be sure to add a new line before EOF. The `*/5` will clear the files every five minutes, and you can change this at your own discretion (read more about cron files [here](http://www.unixgeeks.org/security/newbie/unix/cron-1.html)).
