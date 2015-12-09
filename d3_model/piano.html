@@ -1,5 +1,8 @@
     <!DOCTYPE html>
     <meta charset='utf-8'>
+    <meta http-equiv='cache-control' content='no-cache'>
+    <meta http-equiv='expires' content='0'>
+    <meta http-equiv='pragma' content='no-cache'>
     <style>
     
 body { 
@@ -352,14 +355,16 @@ function compile_send_notes() {
 	async: true,
 	data: "{\"notes\": \""+data+"\"}",
 	success: function(data) {
-	    console.log('success!')
+	    var filename = 'static/' + data.id + '.wav';
+	    var audio = new Audio(filename);
+	    audio.play();
+	    console.log('success!');
 	},
 	error: function(result) {
 	    console.log('oops');
 	}
     });
 }    
-
 
 </script>
     </body>
