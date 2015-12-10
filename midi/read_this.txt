@@ -1,0 +1,1 @@
+Put your own MIDI files in this directory to train your Markov chains!
