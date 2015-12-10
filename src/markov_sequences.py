@@ -93,4 +93,6 @@ class Markov(object):
             for result in self.state_dict[seq]:
                 sum += self.state_dict[seq][result]
             for result in self.state_dict[seq]:
-                self.state_dict[seq][result] /= float(sum)
+                self.state_dict[seq][result] = round(self.state_dict[seq]
+                                                     [result] / float(sum),
+                                                     4)
