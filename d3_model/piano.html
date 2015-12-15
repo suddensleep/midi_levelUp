@@ -73,9 +73,12 @@ body {
     </head>
 
     <body>
-    <h1>Instructions: add notes from the reservoir into the stream.</h1>
-    <input type='button' id='b' value='Play' class="btn"></input>
-    <input type='button' id='aug' value='Augment' class='btn'></input>
+    <h1>Instructions:</h1> 
+    <h2>Click the squares on the piano roll to add notes, or click Populate for a preloaded sample. Click play to hear your creation. Click Augment to interpolate notes. Click Clear to start over. Enjoy!</h2>
+    <input type='button' id='populate' value='Populate' class='btn'></input>
+    <input type='button' id='play' value='Play' class="btn"></input>
+    <input type='button' id='augment' value='Augment' class='btn'></input>
+    <input type='button' id='clear' value='Clear' class='btn'></input>
     <br>
     <script>
 
@@ -107,6 +110,15 @@ var yAxis = d3.svg.axis().scale(y)
 
 var bars = [2, 4, 6, 9, 11, 14, 16, 18, 21, 23];
 var whitebars = [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 20, 22, 24];
+
+var preload_data = [{'x':0,'y':15}, {'x':0,'y':11}, {'x':0,'y':8}, 
+		   {'x':2,'y':15}, {'x':2,'y':11}, {'x':2,'y':8},
+		   {'x':4,'y':15}, {'x':4,'y':10}, {'x':4,'y':6},
+		   {'x':6,'y':15}, {'x':6,'y':10}, {'x':6,'y':6},
+		   {'x':8,'y':15}, {'x':8,'y':8}, {'x':8,'y':5}, 
+		   {'x':10,'y':15}, {'x':10,'y':8}, {'x':10,'y':5},
+		   {'x':12,'y':15}, {'x':12,'y':10}, {'x':12,'y':6},
+		   {'x':13,'y':15}, {'x':13,'y':8}, {'x':13,'y':5}]
 
 function make_x_axis() {
     return d3.svg.axis()
@@ -293,8 +305,53 @@ function dragclick(d) {
 	.attr('y', ry);
 }
 
-d3.select('#b').on('click', compile_send_notes);
-d3.select('#aug').on('click', augment_notes);
+d3.select('#populate').on('click', populate_roll);
+d3.select('#play').on('click', compile_send_notes);
+d3.select('#augment').on('click', augment_notes);
+d3.select('#clear').on('click', clear_notes);
+
+function populate_roll() {
+    svg.selectAll('.note')
+	.data(preload_data)
+	.enter()
+	.append('rect')
+	.attr('class', 'note')
+	.attr('x', function(d) { return x(d.x); })
+	.attr('y', function(d) { return y(d.y); })
+	.attr('height', y(1))
+	.attr('width', x(1))
+	.attr('active', true)
+	.style('cursor', 'pointer')
+	.call(drag);
+}
+
+function compile_send_notes() {
+    var notes = d3.selectAll('[active=true]');
+    var data = [];
+    for (i = 0; i < notes[0].length; i++) {
+	loc = notes[0][i];
+	data.push([invx(loc.x.animVal.value), invy(loc.y.animVal.value)]);
+    }
+
+    $.ajax({
+	type: "POST",
+	contentType: "application/json; charset=utf-8",
+	url: "/play",
+	dataType: "json",
+	async: true,
+	data: "{\"notes\": \""+data+"\"}",
+	success: function(data) {
+	    var filename = 'static/' + data.id + '.wav';
+	    var audio = new Audio(filename);
+	    audio.volume = 1;
+	    audio.play();
+	    console.log('success!');
+	},
+	error: function(result) {
+	    console.log('oops');
+	}
+    });
+}    
 
 function augment_notes() {
     var notes = d3.selectAll('[active=true]');
@@ -313,6 +370,7 @@ function augment_notes() {
 	data: "{\"notes\": \""+data+"\"}",
 	success: function(data) {
 	    d3.selectAll('.note').remove();
+	    console.log(data);
 	    data = data.notes.split(',');
 	    note_data = [];
 	    for (i = 0; i < (data.length / 2); i++) {
@@ -339,32 +397,9 @@ function augment_notes() {
     });
 }
 
-function compile_send_notes() {
-    var notes = d3.selectAll('[active=true]');
-    var data = [];
-    for (i = 0; i < notes[0].length; i++) {
-	loc = notes[0][i];
-	data.push([invx(loc.x.animVal.value), invy(loc.y.animVal.value)]);
-    }
-
-    $.ajax({
-	type: "POST",
-	contentType: "application/json; charset=utf-8",
-	url: "/play",
-	dataType: "json",
-	async: true,
-	data: "{\"notes\": \""+data+"\"}",
-	success: function(data) {
-	    var filename = 'static/' + data.id + '.wav';
-	    var audio = new Audio(filename);
-	    audio.play();
-	    console.log('success!');
-	},
-	error: function(result) {
-	    console.log('oops');
-	}
-    });
-}    
+function clear_notes() {
+    d3.selectAll('.note').remove();
+}
 
 </script>
     </body>
