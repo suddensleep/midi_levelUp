@@ -2,6 +2,9 @@
 
 Training Markov Chain models on melodies and rhythms, and using them to augment existing MIDI files, adding new notes to the files to produce slightly more advanced arrangements.
 
+### Webapp (current version):
+You can find a working version [here](http://bit.ly/1Od5Qnh). I'm still learning all sorts of things about hosting things on AWS so do please let me know if this link is broken at any point.
+
 ###Diary of my work so far:
 
 1. [Scraping MIDI files from the internet](./diary/scraper.ipynb) 
