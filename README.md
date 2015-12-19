@@ -17,14 +17,15 @@ Training Markov Chain models on melodies and rhythms, and using them to augment 
 You may want to use a [virtual environment](https://virtualenv.readthedocs.org/en/latest/) to install the following Python packages: 
 
 - [python-midi](https://github.com/vishnubob/python-midi)
-- [pyFluidSynth](https://pypi.python.org/pypi/pyFluidSynth)
-	- This can be tricky -- you'll need [FluidSynth](http://www.fluidsynth.org/) before this package will work, which has its own platform-dependent requirements. Check the [installation page](http://sourceforge.net/p/fluidsynth/wiki/BuildingWithCMake/) for details on this.
 - [NumPy](http://www.numpy.org)
 
 Additionally, for the webapp to work, you'll want the following:
 
 - [Tendo](https://pypi.python.org/pypi/tendo)
 - [Flask](http://flask.pocoo.org/)
+- [pyFluidSynth](https://pypi.python.org/pypi/pyFluidSynth)
+	- This can be tricky -- you'll need [FluidSynth](http://www.fluidsynth.org/) before this package will work, which has its own platform-dependent requirements. Check the [installation page](http://sourceforge.net/p/fluidsynth/wiki/BuildingWithCMake/) for details on this.
+- The [FluidR3_GM.sf2](https://github.com/urish/cinto/blob/master/media/FluidR3%20GM.sf2) soundfont file.
 
 ### Executables:
 From the (Mac or Linux) terminal, run the following commands.

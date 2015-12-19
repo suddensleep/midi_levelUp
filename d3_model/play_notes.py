@@ -1,4 +1,4 @@
-# only allow one instance to run simultaneouslyA
+# only allow one instance to run simultaneously
 from tendo import singleton
 me = singleton.SingleInstance()
 
