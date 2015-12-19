@@ -1,5 +1,6 @@
     <!DOCTYPE html>
     <meta charset='utf-8'>
+    <!--no caching-->
     <meta http-equiv='cache-control' content='no-cache'>
     <meta http-equiv='expires' content='0'>
     <meta http-equiv='pragma' content='no-cache'>
@@ -81,11 +82,14 @@ body {
     <input type='button' id='clear' value='Clear' class='btn'></input>
     <br>
     <script>
-
+    
+// create margins
 var margin = {top: 30, right: 20, bottom: 30, left: 100},
 width = 1200 - margin.left - margin.right,
 height = 600 - margin.top - margin.bottom;
 
+
+// append svg object
 var svg = d3.select('body')
     .append('svg')
     .attr('class', 'svg')
@@ -94,13 +98,24 @@ var svg = d3.select('body')
     .append('g')
     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
     .on('click', click);
+// call the click function to make a new note or delete one
 
+
+// scales and their inverses, with domains
 var x = d3.scale.linear().range([0, width]);
 var y = d3.scale.linear().range([0, height]);
 
 var invx = d3.scale.linear().range([0, 16]);
 var invy = d3.scale.linear().range([0, 25]);
 
+x.domain([0, 16]);
+y.domain([0, 25]);
+
+invx.domain([0, width]);
+invy.domain([0, height]);
+
+
+// visual formatting to make four measures with two octaves
 var xAxis = d3.svg.axis().scale(x)
     .orient("top")
     .tickValues([0, 4, 8, 12, 16]);
@@ -108,9 +123,14 @@ var xAxis = d3.svg.axis().scale(x)
 var yAxis = d3.svg.axis().scale(y)
     .orient('right').ticks(25);
 
+
+// black and white keys and their corresponding
+// grey and white piano roll bars
 var bars = [2, 4, 6, 9, 11, 14, 16, 18, 21, 23];
 var whitebars = [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 20, 22, 24];
 
+
+// chord skeleton for live demo -- change this to whatever you like!
 var preload_data = [{'x':0,'y':15}, {'x':0,'y':11}, {'x':0,'y':8}, 
 		   {'x':2,'y':15}, {'x':2,'y':11}, {'x':2,'y':8},
 		   {'x':4,'y':15}, {'x':4,'y':10}, {'x':4,'y':6},
@@ -120,6 +140,8 @@ var preload_data = [{'x':0,'y':15}, {'x':0,'y':11}, {'x':0,'y':8},
 		   {'x':12,'y':15}, {'x':12,'y':10}, {'x':12,'y':6},
 		   {'x':13,'y':15}, {'x':13,'y':8}, {'x':13,'y':5}]
 
+
+// make axes
 function make_x_axis() {
     return d3.svg.axis()
 	.scale(x)
@@ -141,12 +163,8 @@ function make_y_axis() {
 	.ticks(25)
 }
 
-x.domain([0, 16]);
-y.domain([0, 25]);
 
-invx.domain([0, width]);
-invy.domain([0, height]);
-
+// make grey bars
 svg.selectAll('.innerg')
     .data(bars)
     .enter()
@@ -157,6 +175,8 @@ svg.selectAll('.innerg')
     .attr('width', width)
     .attr('height', y(1));
 
+
+// make black keys 
 svg.selectAll('.outerb')
     .data(bars)
     .enter()
@@ -167,6 +187,8 @@ svg.selectAll('.outerb')
     .attr('width', 100)
     .attr('height', y(1));
 
+
+// make white keys
 svg.selectAll('.outerw')
     .data(whitebars)
     .enter()
@@ -177,6 +199,7 @@ svg.selectAll('.outerw')
     .attr('width', 100)
     .attr('height', y(1));
 
+// make white bars
 svg.selectAll('.innerw')
     .data(whitebars)
     .enter()
@@ -187,6 +210,7 @@ svg.selectAll('.innerw')
     .attr('width', width)
     .attr('height', y(1));
 
+// draw grid
 svg.append('g')
     .attr('class', 'x axis')
     .attr('transform', 'translate(0,' + height + ')')
@@ -221,6 +245,8 @@ svg.append('g')
 	  .tickFormat('')
 	 );
 
+
+// extra bold line at the octave break 
 svg.append('line')
     .attr('class', 'octave')
     .attr('x1', -100)
@@ -229,21 +255,29 @@ svg.append('line')
     .attr('y2', y(13))
     .style('stroke-width', 2);
 
+
+// whenever you click on the svg object ...
 function click(){
-    // Ignore the click event if it was suppressed
+    // ignore the click event if it was suppressed
     if (d3.event.defaultPrevented) return;
     
-    // Extract the click location\
+    // extract the click location
     var point = d3.mouse(this)
     , p = {x: point[0], y: point[1] };
 
+
+    // get the "snap to" location
     var dx = x(Math.floor(invx(p.x)));
     var dy = y(Math.floor(invy(p.y)));
 
+
+    // naive assumption that there is no note already there
     var flag = false;
 
     var curr_notes = svg.selectAll('[active=true]');
 
+
+    // check all the existing (active) notes
     for (i = 0; i < curr_notes[0].length; i++) {
 	var loc = curr_notes[0][i];
 	if (Math.abs(dx - loc.x.animVal.value) < .1 &&
@@ -253,13 +287,15 @@ function click(){
 	}
     }
 
+    // if there's a note already there, interpret click as a toggle off
     if (flag) {
-	// Note already exists, make inactive and transparent
+	// make note inactive and transparent
 	d3.select(curr_rect)
 	    .call(change_opacity);
     }
+    // otherwise interpret click as a toggle on
     else {
-	// Append a new point
+	// and append a new point
 	svg.append("rect")
 	    .attr("x", dx)
 	    .attr("y", dy)
@@ -274,10 +310,14 @@ function click(){
     
 }
 
+
+// ability to move notes around
 var drag = d3.behavior.drag()
     .on('drag', dragmove)
     .on('dragend', dragclick);
 
+
+// move faithfully with mouse motion (snap to center of bar)
 function dragmove(d) {
     var rx = d3.event.x - x(.5);
     var ry = d3.event.y - y(.5);
@@ -286,15 +326,9 @@ function dragmove(d) {
 	.attr('y', ry);
 }
 
-function change_opacity() {
-    var active = this.active ? false : true,
-	newOpacity = active ? 0 : 1;
 
-    d3.select(this[0][0]).style('opacity', newOpacity);
-
-    d3.select(this[0][0]).attr('active', !active);
-}
-
+// click to the nearest quarter note
+// note: implement finer rhythms in later iterations
 function dragclick(d) {
 
     var rx = x(Math.floor(invx(this.x.animVal.value + x(.5))));
@@ -305,11 +339,26 @@ function dragclick(d) {
 	.attr('y', ry);
 }
 
+
+// flip from active to inactive and vice versa
+function change_opacity() {
+    var active = this.active ? false : true,
+	newOpacity = active ? 0 : 1;
+
+    d3.select(this[0][0]).style('opacity', newOpacity);
+
+    d3.select(this[0][0]).attr('active', !active);
+}
+
+
+// button functionality
 d3.select('#populate').on('click', populate_roll);
 d3.select('#play').on('click', compile_send_notes);
 d3.select('#augment').on('click', augment_notes);
 d3.select('#clear').on('click', clear_notes);
 
+
+// load the chord skeleton from above
 function populate_roll() {
     svg.selectAll('.note')
 	.data(preload_data)
@@ -325,14 +374,19 @@ function populate_roll() {
 	.call(drag);
 }
 
+
+// send positions of current notes to flask/python to PLAY them
 function compile_send_notes() {
     var notes = d3.selectAll('[active=true]');
     var data = [];
+    
+    // extract positions of active notes
     for (i = 0; i < notes[0].length; i++) {
 	loc = notes[0][i];
 	data.push([invx(loc.x.animVal.value), invy(loc.y.animVal.value)]);
     }
 
+    // send in POST call to /play as a JSON file
     $.ajax({
 	type: "POST",
 	contentType: "application/json; charset=utf-8",
@@ -341,11 +395,13 @@ function compile_send_notes() {
 	async: true,
 	data: "{\"notes\": \""+data+"\"}",
 	success: function(data) {
+	    // the data we get back is a randomly generated filename
 	    var filename = 'static/' + data.id + '.wav';
 	    var audio = new Audio(filename);
+	    // volume control: 0 - 1
 	    audio.volume = 1;
 	    audio.play();
-	    console.log('success!');
+	    console.log('successfully read ' + filename);
 	},
 	error: function(result) {
 	    console.log('oops');
@@ -353,9 +409,13 @@ function compile_send_notes() {
     });
 }    
 
+
+// send positions of current notes to flask/python to AUGMENT them
 function augment_notes() {
     var notes = d3.selectAll('[active=true]');
     var data = [];
+
+    // same as above so far ... 
     for (i = 0; i < notes[0].length; i++) {
 	loc = notes[0][i];
 	data.push([invx(loc.x.animVal.value), invy(loc.y.animVal.value)]);
@@ -369,15 +429,21 @@ function augment_notes() {
 	async: true,
 	data: "{\"notes\": \""+data+"\"}",
 	success: function(data) {
+	    // here we get back a new list of notes
+	    // including the ones we sent,
+	    // so let's start by removing all note
+	    // objects so we can start fresh
 	    d3.selectAll('.note').remove();
-	    console.log(data);
 	    data = data.notes.split(',');
 	    note_data = [];
+	    
+	    // parse note positions
 	    for (i = 0; i < (data.length / 2); i++) {
 		note_data.push({ 'x': parseFloat(data[2 * i]),
 				 'y': parseFloat(data[2 * i + 1])});
 	    }
-	    
+
+	    // append all notes in returned list
 	    svg.selectAll('.note')
 		.data(note_data)
 		.enter()
@@ -397,6 +463,8 @@ function augment_notes() {
     });
 }
 
+
+// pretty self-explanatory
 function clear_notes() {
     d3.selectAll('.note').remove();
 }

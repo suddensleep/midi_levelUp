@@ -1,3 +1,7 @@
+# only allow one instance to run simultaneouslyA
+from tendo import singleton
+me = singleton.SingleInstance()
+
 import fluidsynth
 import flask
 import time
@@ -12,13 +16,19 @@ import markov_funcs as markf
 import note_interpolater as notei
 from collections import defaultdict
 
+
+# containers for Markov objects and their weights
 melody_marks = {}
 rhythm_marks = {}
 melody_weights = {}
 rhythm_weights = {}
 
-for f in os.listdir('./pickles/'):
-    with open('./pickles/' + f, 'r') as g:
+
+# unpickle the objects created from /src scripts
+# and initialize all weights to 1
+### CHANGE THESE DIRECTORIES TO MATCH YOUR SYSTEM
+for f in os.listdir('path/to/repo/pickles/'):
+    with open('path/to/repo/pickles/' + f, 'r') as g:
         try:
             mark = pickle.load(g)
             key = tuple([mark.before, mark.after])
@@ -32,42 +42,41 @@ for f in os.listdir('./pickles/'):
             print ("There may have been a problem opening the " + 
                    "pickled file " + f + ".") 
 
-max_length = 3
+# note, this depends on what you defined your max_order variables
+# to be in the markov_funcs module
+max_length = 2
 
+# initialize flask
 app = flask.Flask(__name__)
 
-absolute_path = '/home/john_gilling/eb_flask_app/'
-
-def make_dict(notes, flag_for_x):
-    note_dict = defaultdict(list)
-
-    flat_data = map(lambda x: round(float(x), 2), notes['notes'].split(','))
-
-    stacked_data = [(flat_data[2 * i],
-                     72 - flat_data[2 * i + 1])
-                    for i in range(len(flat_data) / 2)]
-    
-    for key, val in stacked_data:
-        note_dict[key].append(val)
-
-    if flag_for_x:
-        for i in range(16):
-            if i in note_dict.keys():
-                continue
-            note_dict[i].append('x')
-
-    return note_dict
+### CHANGE THIS TO MATCH YOUR CORRECT SYSTEM PATH
+absolute_path = '/path/to/repo/d3_model/'
 
 
+# load homepage
 @app.route('/')
 def home_page():
+    """
+    Loads the piano roll from the html/javascript.
+    """
+    
     with open(absolute_path + 'piano.html', 'r') as f:
         return f.read()
 
 
+# load play page
 @app.route('/play', methods = ['POST'])
 def play_notes():
+    """
+    Pulls in note positions from javascript, creates a random
+    filename, and writes .wav file representing those notes.
 
+    Inputs: No direct arguments, but ...
+    Pulls in JSON of note positions via flask
+    
+    Outputs: filename prefix (sends to javascript)
+    """
+    
     data = flask.request.json
 
     if data['notes'] == '':
@@ -106,11 +115,19 @@ def play_notes():
 
     return flask.jsonify({'id': rand_id})
 
-
+# load augment page
 @app.route('/augment', methods = ['POST'])
 def augment():
-    """CHANGE THIS IMPLEMENTATION TO REFLECT MODELS"""
+    """
+    Pulls in note events from javascript, and interpolates
+    the missing notes via note_interpolater methods.
 
+    Inputs: No direct arguments, but ...
+    Pulls in JSON note positions via flask
+
+    Outputs: New JSON of notes.
+    """
+    
     data = flask.request.json
 
     new_notes = ''

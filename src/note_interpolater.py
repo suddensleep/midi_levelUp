@@ -2,7 +2,22 @@ from collections import defaultdict
 from itertools import product
 import numpy as np
 
+
 def make_note_stack(note_string):
+    """
+    Pulls in raw JSON object from JQuery, and turns it into a list
+    of tuples representing the notes. The structure of this "stack" 
+    is [(timestamp1, [list, of, pitches]), (timestamp2, [pitch]), ...]
+    and the outer list of tuples is sorted in chronological order
+    (i.e. sorted with key as the 0th index).
+
+    Inputs: note_string is a raw unsorted string in the form
+    'timestamp_k,pitch_k,timestamp_j,pitch_j,...'
+
+    Outputs: stacked_data is a tuple as described above, and to_fill 
+    describes which timestamps need notes in the augmentation stage
+    """
+
     note_dict = defaultdict(list)
 
     flat_data = map(lambda x: round(float(x), 2),
@@ -32,6 +47,26 @@ def make_note_stack(note_string):
 
 
 def unstack_sequences(stacked_seq):
+    """
+    Pulls out all combinations of single-note melodies, given a stacked
+    representation from the method above. Ignores all but the first instance
+    of the note 'x'.
+
+    Example:
+    Input of [(0, [15, 16, 19]), (1, ['x']), (2, [20, 22]), (3, ['x'])] would 
+    yield an output of 
+    [(15, 'x', 20), (15, 'x', 22), (16, 'x', 20), 
+    (16, 'x', 22), (19, 'x', 20), (19, 'x', 22)].
+
+    Inputs: stacked_seq is a list of tuples. The structure of this "stack" 
+    is [(timestamp1, [list, of, pitches]), (timestamp2, [pitch]), ...]
+    and the outer list of tuples is sorted in chronological order
+    (i.e. sorted with key as the 0th index).
+
+    Outputs: A list of tuples representing all "unstacked" melodies 
+    and the first note to interpolate.
+    """
+    
     flag = False
 
     new_seq = []
@@ -46,8 +81,25 @@ def unstack_sequences(stacked_seq):
 
     return list(product(*zip(*new_seq)[1]))
 
-def get_mel_probs(melody_marks, notes, weights, max_len):
 
+def get_mel_probs(melody_marks, notes, weights, max_len):
+    """
+    Main worker function for interpolating notes. Given a sequence
+    of pitch values with exactly one 'x' value included, finds the
+    relevant Markov Chain dictionaries that fit this pattern, and 
+    builds up a weighted average of probability distributions on 
+    the value of 'x'. 
+
+    Inputs:
+    melody_marks is a dictionary of Markov objects
+    notes is a tuple representing a note sequence
+    weights is a dictionary of weights for each model
+    (initialized to even weighting)
+    max_len is the maximum order length for the set of markov chains
+
+    Outputs: List of 2-tuples of (pitch, probability), sorted by pitch.
+    """
+    
     mel_probs = {i: 0 for i in range(128)}
 
     to_fill = notes.index('x')
@@ -120,7 +172,22 @@ def get_mel_probs(melody_marks, notes, weights, max_len):
     return sorted(mel_probs.items(), key = lambda x: x[0])
 
 def get_note_to_append(marks, stack, weights, max_len):
+    """
+    The main function called by flask, this function gathers a list 
+    of possible notes to insert by calling the get_mel_probs method
+    on each of the unstacked melodies, then selects one at random.
 
+    Inputs: 
+    marks is a dictionary of Markov objects
+    stack is a stacked sequence of notes 
+    (i.e. output from get_note_stack)
+    weights is a dictionary of weights for each model
+    (initialized to even weighting)
+    max_len is the max order length of the set of Markov chains
+
+    Output: The pitch to be inserted, as a MIDI integer value.
+    """
+    
     possible_notes = []
     
     note_sequences = unstack_sequences(stack)
